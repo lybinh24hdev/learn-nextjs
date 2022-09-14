@@ -1,5 +1,6 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 
 export default function Home() {
@@ -19,10 +20,10 @@ export default function Home() {
                 <p className={styles.description}>{`<Slogan> Dev every moment</Slogan>`}</p>
                 <ul>
                     <li>
-                        <a href="/about">About us</a>
+                        <Link href="/about">About us</Link>
                     </li>
                     <li>
-                        <a href="/products">Product</a>
+                        <Link href="/products">Product</Link>
                     </li>
                 </ul>
 
