@@ -25,6 +25,9 @@ export default function Home() {
                     <li>
                         <Link href="/products">Product</Link>
                     </li>
+                    <li>
+                        <Link href="/products">Nguyễn Vĩnh Tri</Link>
+                    </li>
                 </ul>
 
                 <div className={styles.grid}>
