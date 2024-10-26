@@ -53,7 +53,7 @@ export default function Home() {
         const newErrors = { ...errors };
         let invalid = false;
         Object.keys(form).forEach((key) => {
-            if (!form[key]) {
+            if (isNaN(form[key])) {
                 invalid = true;
                 newErrors[key] = true;
             }
