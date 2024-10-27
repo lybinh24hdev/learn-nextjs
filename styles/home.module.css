@@ -21,19 +21,25 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
+    padding-top: 3rem;
 }
 
 .form {
     display: flex;
     flex-direction: column;
-    height: 20rem;
+    min-height: 20rem;
     width: 100%;
     max-width: 30rem;
     border: 1px solid rgb(0, 136, 255);
     border-radius: 5px;
     padding: 1rem;
+}
+
+.form .inputField {
+    display: flex;
+    flex-direction: column;
 }
 
 .form input {
@@ -54,14 +60,42 @@
 .btnWrapper {
     flex: 1;
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
+    margin: 1rem 0;
 }
 
 .downloadBtn {
     width: 10rem;
     height: 2rem;
     font-weight: 700;
+}
+
+.modal {
+    height: 30rem;
+    overflow-y: auto;
+}
+
+.modal ul {
+    list-style-type: none;
+    padding-right: 40px;
+}
+
+.modal ul li {
+    margin-bottom: 0.5rem;
+}
+
+.modal ul li.lastLi {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.modal .g0 {
+    color: rgb(255, 85, 0);
+}
+
+.modal .g1 {
+    color: rgb(0, 200, 255);
 }
 
 .footer {

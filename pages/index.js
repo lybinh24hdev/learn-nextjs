@@ -1,18 +1,29 @@
 import Head from 'next/head';
 import st from '../styles/home.module.css';
 import { useState } from 'react';
+import Modal from '../components/Modal';
 
 const G00 = 'G00';
 const G01 = 'G01';
 const G02 = 'G02';
+const props = {
+    first: 'First',
+    cut: 'Cut',
+    last: 'Last',
+    returnLast: 'Return Last',
+};
+
+const isNumber = (value) => typeof value === 'number';
 
 export default function Home() {
     const [form, setForm] = useState({
-        z: null,
-        delta: null,
-        limit: null,
+        first: null,
+        cut: null,
+        last: null,
+        returnLast: null,
     });
     const [errors, setErrors] = useState({});
+    const [isModalOpen, setModalOpen] = useState(false);
 
     const convertObjectToString = (data) => {
         const lines = [];
@@ -27,25 +38,27 @@ export default function Home() {
     };
 
     const generateText = (input) => {
-        const { z, delta, limit } = input;
-        if (limit >= z) return;
-        if (isNaN(z) || isNaN(delta) || isNaN(limit)) return;
+        console.log(`🚀  input:`, input);
+        const { first, cut, last, returnLast } = input;
+        if (last >= first) return null;
+        if (!isNumber(first) || !isNumber(cut) || !isNumber(last) || !isNumber(returnLast)) return null;
 
         const result = [];
         let i = 0;
-        let currentG00 = z;
+        let currentG00 = first;
 
-        while (currentG00 > limit) {
+        while (currentG00 > last) {
             result.push({
-                [G00]: !i ? z : currentG00 + 1,
-                [G01]: currentG00 - delta,
-                [G02]: z,
+                [G00]: !i ? first : currentG00 + returnLast,
+                [G01]: currentG00 - cut,
+                [G02]: first,
             });
             i++;
-            currentG00 -= delta;
+            currentG00 -= cut;
+            if (i > 10000) break;
         }
 
-        return convertObjectToString(result);
+        return result;
     };
 
     const handleDownLoad = () => {
@@ -53,7 +66,7 @@ export default function Home() {
         const newErrors = { ...errors };
         let invalid = false;
         Object.keys(form).forEach((key) => {
-            if (isNaN(form[key])) {
+            if (!isNumber(form[key])) {
                 invalid = true;
                 newErrors[key] = true;
             }
@@ -63,7 +76,7 @@ export default function Home() {
         if (invalid) return;
 
         // Create a new Blob with the text content
-        const blob = new Blob([generateText(form)], { type: 'text/plain' });
+        const blob = new Blob([convertObjectToString(generateText(form))], { type: 'text/plain' });
 
         // Create a temporary anchor element
         const link = document.createElement('a');
@@ -94,6 +107,33 @@ export default function Home() {
         }
     };
 
+    const handleOpenModalPreview = () => {
+        setModalOpen(true);
+    };
+
+    const preview = () => {
+        return (
+            <ul>
+                {(generateText(form) || []).map((line) => (
+                    <>
+                        <li>
+                            <span className={st.g0}>{G00}</span>
+                            {` Z${line.G00}`}
+                        </li>
+                        <li>
+                            <span className={st.g1}>{G01}</span>
+                            {` Z${line.G01}`}
+                        </li>
+                        <li className={st.lastLi}>
+                            <span className={st.g0}>{G00}</span>
+                            {` Z${line.G02}`}
+                        </li>
+                    </>
+                ))}
+            </ul>
+        );
+    };
+
     return (
         <div className={st.container}>
             <Head>
@@ -110,41 +150,31 @@ export default function Home() {
                 <div className={st.main}>
                     <h3>Auto-generate CNC script tool</h3>
                     <div className={st.form}>
-                        <label htmlFor="z">
-                            Z<span className={st.requiredIcon}>*</span>:
-                        </label>
-                        <input
-                            className={errors['z'] ? st.invalidInput : ''}
-                            type="number"
-                            id="z"
-                            name="z"
-                            onChange={(e) => handleChangeForm('z', +e.target.value)}
-                        />
-                        <label htmlFor="delta">
-                            Delta<span className={st.requiredIcon}>*</span>:
-                        </label>
-                        <input
-                            className={errors['delta'] ? st.invalidInput : ''}
-                            type="number"
-                            id="delta"
-                            name="delta"
-                            step={0.1}
-                            onChange={(e) => handleChangeForm('delta', +e.target.value)}
-                        />
-                        <label htmlFor="limit">
-                            Limit<span className={st.requiredIcon}>*</span>:
-                        </label>
-                        <input
-                            className={errors['limit'] ? st.invalidInput : ''}
-                            type="number"
-                            id="limit"
-                            name="limit"
-                            onChange={(e) => handleChangeForm('limit', +e.target.value)}
-                        />
-
+                        {Object.keys(props).map((key) => (
+                            <div key={key} className={st.inputField}>
+                                <label htmlFor={key}>
+                                    {props[key]}
+                                    <span className={st.requiredIcon}>*</span>:
+                                </label>
+                                <input
+                                    className={errors[key] ? st.invalidInput : ''}
+                                    type="number"
+                                    id={key}
+                                    name={key}
+                                    step={props[key] === props.cut ? 0.1 : 1}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        handleChangeForm(key, value === '' ? value : +value);
+                                    }}
+                                />
+                            </div>
+                        ))}
                         <div className={st.btnWrapper}>
                             <button className={st.downloadBtn} onClick={handleDownLoad}>
                                 Download
+                            </button>
+                            <button className={st.downloadBtn} onClick={handleOpenModalPreview}>
+                                Preview
                             </button>
                         </div>
                     </div>
@@ -153,6 +183,9 @@ export default function Home() {
                     <h5 className={st.text}>Powered by Phlybi</h5>
                 </div>
             </div>
+            <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Preview">
+                <div className={st.modal}>{preview()}</div>
+            </Modal>
         </div>
     );
 }
