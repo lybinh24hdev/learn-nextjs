@@ -11,6 +11,8 @@ const props = {
     cut: 'Cut',
     last: 'Last',
     returnLast: 'Return Last',
+    f1: 'F1',
+    f2: 'F2',
 };
 
 const isNumber = (value) => typeof value === 'number';
@@ -21,34 +23,21 @@ export default function Home() {
         cut: null,
         last: null,
         returnLast: null,
+        f1: null,
+        f2: null,
     });
     const [errors, setErrors] = useState({});
     const [isModalOpen, setModalOpen] = useState(false);
 
-    const convertObjectToString = (data) => {
-        const lines = [];
-
-        data.forEach((obj) => {
-            for (const key in obj) {
-                lines.push(`${key === G02 ? G00 : key} Z${obj[key]}`);
-            }
-        });
-
-        return lines.join('\n');
-    };
-
-    const generateText = (input) => {
-        console.log(`🚀  input:`, input);
-        const { first, cut, last, returnLast } = input;
-        if (last >= first) return null;
-        if (!isNumber(first) || !isNumber(cut) || !isNumber(last) || !isNumber(returnLast)) return null;
-
-        const result = [];
+    const generateText = () => {
+        // Transform input to result in Array format
+        const { first, cut, last, returnLast, f1, f2 } = form;
+        const resultArray = [];
         let i = 0;
         let currentG00 = first;
 
         while (currentG00 > last) {
-            result.push({
+            resultArray.push({
                 [G00]: !i ? first : currentG00 + returnLast,
                 [G01]: currentG00 - cut,
                 [G02]: first,
@@ -58,7 +47,27 @@ export default function Home() {
             if (i > 10000) break;
         }
 
-        return result;
+        // Convert array to string format
+        const lines = [];
+        resultArray.forEach((obj, index) => {
+            for (const key in obj) {
+                if (!index) {
+                    lines.push(
+                        `${key === G02 ? G00 : key} Z${obj[key].toFixed(1).replace(/\.0$/, '.')} ${
+                            key === G01 ? f2 : ''
+                        }`
+                    );
+                } else {
+                    lines.push(
+                        `${key === G00 || key === G01 ? G01 : G00} Z${obj[key].toFixed(1).replace(/\.0$/, '.')} ${
+                            key === G00 ? f1 : key === G01 ? f2 : ''
+                        }`
+                    );
+                }
+            }
+        });
+
+        return lines;
     };
 
     const handleDownLoad = () => {
@@ -66,6 +75,7 @@ export default function Home() {
         const newErrors = { ...errors };
         let invalid = false;
         Object.keys(form).forEach((key) => {
+            if (props[key] === props.f1 || props[key] === props.f2) return;
             if (!isNumber(form[key])) {
                 invalid = true;
                 newErrors[key] = true;
@@ -75,23 +85,15 @@ export default function Home() {
         setErrors(newErrors);
         if (invalid) return;
 
-        // Create a new Blob with the text content
-        const blob = new Blob([convertObjectToString(generateText(form))], { type: 'text/plain' });
+        const script = generateText().join('\n');
 
-        // Create a temporary anchor element
+        // Download .txt file
+        const blob = new Blob([script], { type: 'text/plain' });
         const link = document.createElement('a');
-
-        // Set the download attribute with the provided filename
         link.download = 'CNC_Script';
-
-        // Create a URL for the Blob and set it as the href attribute
         link.href = window.URL.createObjectURL(blob);
-
-        // Append the anchor to the document body and trigger a click to download
         document.body.appendChild(link);
         link.click();
-
-        // Clean up by removing the anchor and releasing the Blob URL
         document.body.removeChild(link);
         window.URL.revokeObjectURL(link.href);
     };
@@ -111,29 +113,6 @@ export default function Home() {
         setModalOpen(true);
     };
 
-    const preview = () => {
-        return (
-            <ul>
-                {(generateText(form) || []).map((line) => (
-                    <>
-                        <li>
-                            <span className={st.g0}>{G00}</span>
-                            {` Z${line.G00}`}
-                        </li>
-                        <li>
-                            <span className={st.g1}>{G01}</span>
-                            {` Z${line.G01}`}
-                        </li>
-                        <li className={st.lastLi}>
-                            <span className={st.g0}>{G00}</span>
-                            {` Z${line.G02}`}
-                        </li>
-                    </>
-                ))}
-            </ul>
-        );
-    };
-
     return (
         <div className={st.container}>
             <Head>
@@ -150,25 +129,48 @@ export default function Home() {
                 <div className={st.main}>
                     <h3>Auto-generate CNC script tool</h3>
                     <div className={st.form}>
-                        {Object.keys(props).map((key) => (
-                            <div key={key} className={st.inputField}>
-                                <label htmlFor={key}>
-                                    {props[key]}
-                                    <span className={st.requiredIcon}>*</span>:
-                                </label>
-                                <input
-                                    className={errors[key] ? st.invalidInput : ''}
-                                    type="number"
-                                    id={key}
-                                    name={key}
-                                    step={props[key] === props.cut ? 0.1 : 1}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        handleChangeForm(key, value === '' ? value : +value);
-                                    }}
-                                />
-                            </div>
-                        ))}
+                        {Object.keys(props).map((key) => {
+                            if (props[key] === props.f1 || props[key] === props.f2) return <></>;
+                            return (
+                                <div key={key} className={st.inputField}>
+                                    <label htmlFor={key}>
+                                        {props[key]}
+                                        <span className={st.requiredIcon}>*</span>:
+                                    </label>
+                                    <input
+                                        className={errors[key] ? st.invalidInput : ''}
+                                        type="number"
+                                        id={key}
+                                        name={key}
+                                        step={props[key] === props.cut ? 0.1 : 1}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            handleChangeForm(key, value === '' ? value : +value);
+                                        }}
+                                    />
+                                </div>
+                            );
+                        })}
+                        <div className={st.inputFieldText}>
+                            {Object.keys(props).map((key) => {
+                                if (props[key] !== props.f1 && props[key] !== props.f2) return <></>;
+                                return (
+                                    <div key={key} className={st.inputField}>
+                                        <label htmlFor={key}>
+                                            {props[key]}
+                                            <span className={st.requiredIcon}>*</span>:
+                                        </label>
+                                        <input
+                                            className={errors[key] ? st.invalidInput : ''}
+                                            type="text"
+                                            id={key}
+                                            name={key}
+                                            onChange={(e) => handleChangeForm(key, e.target.value)}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
                         <div className={st.btnWrapper}>
                             <button className={st.downloadBtn} onClick={handleDownLoad}>
                                 Download
@@ -180,11 +182,19 @@ export default function Home() {
                     </div>
                 </div>
                 <div className={st.footer}>
-                    <h5 className={st.text}>Powered by Phlybi</h5>
+                    <h5 className={st.text}>Powered by Phlybi 🤎 Hmy 🐳</h5>
                 </div>
             </div>
             <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Preview">
-                <div className={st.modal}>{preview()}</div>
+                <div className={st.modal}>
+                    <ul>
+                        {generateText().map((text, i) => (
+                            <li key={text} className={(i + 1) % 3 === 0 ? st.lastLi : ''}>
+                                {text}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             </Modal>
         </div>
     );

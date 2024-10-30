@@ -23,7 +23,7 @@
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    padding-top: 3rem;
+    padding-top: 1rem;
 }
 
 .form {
@@ -34,7 +34,7 @@
     max-width: 30rem;
     border: 1px solid rgb(0, 136, 255);
     border-radius: 5px;
-    padding: 1rem;
+    padding: 1.5rem;
 }
 
 .form .inputField {
@@ -42,10 +42,23 @@
     flex-direction: column;
 }
 
+.form .inputFieldText {
+    display: flex;
+    gap: 2rem;
+}
+
+.form .inputFieldText .inputField {
+    flex: 1;
+}
+
 .form input {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     width: 50%;
     height: 2rem;
+}
+
+.form .inputFieldText input {
+    width: 100%;
 }
 
 .form label {
@@ -88,14 +101,6 @@
 .modal ul li.lastLi {
     padding-bottom: 0.5rem;
     border-bottom: 1px solid #eaeaea;
-}
-
-.modal .g0 {
-    color: rgb(255, 85, 0);
-}
-
-.modal .g1 {
-    color: rgb(0, 200, 255);
 }
 
 .footer {
